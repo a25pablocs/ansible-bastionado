@@ -1,0 +1,132 @@
+- name: Auditoría profesional del sistema (post-hardening)
+  hosts: servers
+  become: yes
+
+  tasks:
+
+    # INFORMACIÓN DEL SISTEMA
+
+    - name: Obtener hostname
+      command: hostname
+      register: hostname
+
+    - name: Obtener IP del sistema
+      command: hostname -I
+      register: ip
+
+    - name: Obtener sistema operativo
+      command: cat /etc/os-release
+      register: os
+
+    - name: Obtener kernel
+      command: uname -r
+      register: kernel
+
+    # RED Y SERVICIOS
+
+    - name: Puertos en escucha
+      command: ss -tuln
+      register: puertos
+
+    - name: Conexiones activas
+      command: ss -antp
+      register: conexiones
+
+    - name: Servicios activos
+      command: systemctl list-units --type=service --state=running
+      register: servicios
+
+    # SEGURIDAD SSH
+
+    - name: Configuración SSH
+      command: cat /etc/ssh/sshd_config
+      register: ssh_config
+
+    # FIREWALL
+
+    - name: Estado firewall UFW
+      command: ufw status verbose
+      register: firewall
+
+    # USUARIOS
+
+    - name: Usuarios del sistema
+      command: getent passwd
+      register: usuarios
+
+    # ESTADO DEL SISTEMA
+
+    - name: Uptime
+      command: uptime
+      register: uptime
+
+    - name: Memoria
+      command: free -h
+      register: memoria
+
+    - name: Disco
+      command: df -h
+      register: disco
+
+    # INFORME FINAL
+
+    - name: Generar informe de auditoría completa
+      copy:
+        content: |
+          ==========================
+           AUDITORÍA POST-HARDENING
+          ==========================
+
+          FECHA: {{ ansible_date_time.date }}
+
+
+           IDENTIFICACIÓN DEL SISTEMA
+          ----------------------------
+          HOSTNAME:
+          {{ hostname.stdout }}
+
+          IP:
+          {{ ip.stdout }}
+
+          SISTEMA OPERATIVO:
+          {{ os.stdout }}
+
+          KERNEL:
+          {{ kernel.stdout }}
+
+          =======================
+           SEGURIDAD Y HARDENING
+          =======================
+
+          PUERTOS ABIERTOS:
+          {{ puertos.stdout }}
+
+          CONEXIONES ACTIVAS:
+          {{ conexiones.stdout }}
+
+          SERVICIOS ACTIVOS:
+          {{ servicios.stdout }}
+
+          CONFIGURACIÓN SSH:
+          {{ ssh_config.stdout }}
+
+          FIREWALL:
+          {{ firewall.stdout }}
+
+          USUARIOS DEL SISTEMA:
+          {{ usuarios.stdout }}
+
+          ====================
+           ESTADO DEL SISTEMA
+          ====================
+
+          UPTIME:
+          {{ uptime.stdout }}
+
+          MEMORIA:
+          {{ memoria.stdout }}
+
+          DISCO:
+          {{ disco.stdout }}
+
+        dest: /tmp/auditoria_{{ inventory_hostname }}_pro.txt

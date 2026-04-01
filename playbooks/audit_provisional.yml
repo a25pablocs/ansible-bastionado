@@ -1,0 +1,38 @@
+- name: Auditoría del sistema (post-hardening)
+  hosts: servers
+  become: yes
+
+  tasks:
+
+    # Obtener puertos abiertos
+    - name: Obtener puertos en escucha
+      command: ss -tuln
+      register: puertos
+
+    # Obtener servicios activos
+    - name: Obtener servicios activos
+      command: systemctl list-units --type=service --state=running
+      register: servicios
+
+    # Mostrar puertos
+    - name: Mostrar puertos abiertos
+      debug:
+        var: puertos.stdout
+
+    # Mostrar servicios
+    - name: Mostrar servicios activos
+      debug:
+        var: servicios.stdout
+
+    # Guardar auditoría en archivo
+    - name: Guardar auditoría en archivo
+      copy:
+        content: |
+          FECHA: {{ ansible_date_time.date }}
+
+          PUERTOS:
+          {{ puertos.stdout }}
+
+          SERVICIOS:
+          {{ servicios.stdout }}
+        dest: /tmp/auditoria_post_hardening.txt

@@ -1,0 +1,42 @@
+- name: Limpieza avanzada del sistema
+  hosts: servers
+  become: yes
+
+  vars:
+    # Lista de servicios potencialmente innecesarios/inseguros
+    servicios_inseguros:
+      - apache2
+      - vsftpd
+      - telnet
+      - rpcbind
+      - nfs-server
+
+  tasks:
+
+    # Elimina paquetes innecesarios
+    - name: Eliminar paquetes no usados
+      apt:
+        autoremove: yes
+        purge: yes
+
+    # Limpia cache
+    - name: Limpiar cache de apt
+      apt:
+        autoclean: yes
+
+    # Desinstalar servicios inseguros si existen
+    - name: Eliminar servicios inseguros
+      apt:
+        name: "{{ servicios_inseguros }}"
+        state: absent
+        purge: yes
+      ignore_errors: yes
+
+    # Asegurar que servicios están detenidos
+    - name: Detener servicios inseguros
+      service:
+        name: "{{ item }}"
+        state: stopped
+        enabled: no
+      loop: "{{ servicios_inseguros }}"
+      ignore_errors: yes
