@@ -1,0 +1,26 @@
+# Playbook de preparación base del sistema
+# Se ejecuta en todos los servidores del inventario
+
+# Actualiza todos los paquetes del sistema
+- name: Actualizar sistema
+  apt:
+    update_cache: yes
+    upgrade: dist
+
+# Instala paquetes básicos útiles para administración
+- name: Instalar herramientas básicas
+  apt:
+    name:
+      - curl
+      - vim
+      - sudo
+      - net-tools
+    state: present
+
+# Crear usuario administrador para gestión
+- name: Crear usuario admin
+  user:
+    name: admin
+    groups: sudo
+    append: yes
+    state: present

@@ -1,0 +1,37 @@
+- name: Configurar parametros de seguridad del kernel
+  sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    state: present
+    reload: yes
+  loop:
+    - { key: "net.ipv4.ip_forward",                value: "0" }
+    - { key: "net.ipv4.conf.all.rp_filter",         value: "1" }
+    - { key: "net.ipv4.icmp_echo_ignore_all",        value: "1" }
+    - { key: "net.ipv4.tcp_syncookies",              value: "1" }
+    - { key: "net.ipv4.conf.all.accept_redirects",   value: "0" }
+    - { key: "net.ipv4.conf.all.send_redirects",     value: "0" }
+    - { key: "net.ipv4.conf.all.log_martians",       value: "1" }
+    - { key: "net.ipv4.conf.default.log_martians",       value: "1" }
+    - { key: "net.ipv4.conf.default.accept_redirects",   value: "0" }
+    - { key: "net.ipv6.conf.all.accept_redirects",       value: "0" }
+    - { key: "net.ipv6.conf.default.accept_redirects",   value: "0" }
+    - { key: "kernel.sysrq",                             value: "0" }
+    - { key: "fs.protected_fifos",                       value: "2" }
+
+- name: Banner legal issue
+  copy:
+    dest: /etc/issue
+    content: |
+      ACCESO RESTRINGIDO - Sistema de uso privado.
+      El acceso no autorizado esta prohibido y sera perseguido legalmente.
+      Todas las conexiones son monitorizadas y registradas.
+
+- name: Banner legal issue.net
+  copy:
+    dest: /etc/issue.net
+    content: |
+      ACCESO RESTRINGIDO - Sistema de uso privado.
+      El acceso no autorizado esta prohibido y sera perseguido legalmente.
+      Todas las conexiones son monitorizadas y registradas.
+

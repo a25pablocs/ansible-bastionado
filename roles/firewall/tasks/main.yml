@@ -1,0 +1,48 @@
+# Instalar iptables-persistent para que las reglas sobrevivan reinicios
+- name: Instalar iptables-persistent
+  apt:
+    name:
+      - iptables
+      - iptables-persistent
+    state: present
+    update_cache: yes
+
+# Denegar todo el tráfico entrante por defecto (política DROP)
+- name: Política por defecto INPUT: DROP
+  iptables:
+    chain: INPUT
+    policy: DROP
+
+# Permitir tráfico de loopback (necesario para el sistema)
+- name: Permitir loopback
+  iptables:
+    chain: INPUT
+    in_interface: lo
+    jump: ACCEPT
+
+# Permitir conexiones ya establecidas y relacionadas
+- name: Permitir conexiones establecidas
+  iptables:
+    chain: INPUT
+    ctstate:
+      - ESTABLISHED
+      - RELATED
+    jump: ACCEPT
+
+# Permitir SSH en el puerto 22
+- name: Permitir SSH
+  iptables:
+    chain: INPUT
+    protocol: tcp
+    destination_port: "22"
+    jump: ACCEPT
+
+# Permitir todo el tráfico saliente
+- name: Política por defecto OUTPUT: ACCEPT
+  iptables:
+    chain: OUTPUT
+    policy: ACCEPT
+
+# Guardar reglas para que persistan tras reinicio
+- name: Guardar reglas iptables
+  command: netfilter-persistent save

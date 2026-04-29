@@ -1,0 +1,116 @@
+# Playbook de hardening del servicio SSH
+
+# Deshabilita la autenticación por contraseña
+# Obliga a usar claves SSH
+- name: Desactivar autenticación por contraseña
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^#?PasswordAuthentication"
+    line: "PasswordAuthentication no"
+
+# Evita que el usuario root pueda conectarse directamente por SSH
+- name: Desactivar login de root por SSH
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^#?PermitRootLogin"
+    line: "PermitRootLogin no"
+
+# Crea el archivo con el texto del aviso legal
+# Aparece antes de autenticarse, tiene valor legal y disuasorio
+- name: Crear banner SSH
+  copy:
+    dest: /etc/ssh/banner
+    content: |
+      ╔══════════════════════════════════════════╗
+      ║   ACCESO RESTRINGIDO - SISTEMA PRIVADO   ║
+      ║   Todas las conexiones son monitorizadas ║
+      ╚══════════════════════════════════════════╝
+
+# Apunta sshd_config al archivo de banner recién creado
+# Sin esta línea el banner no se mostraría aunque el archivo exista
+- name: Activar banner SSH en sshd_config
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^#\\s*Banner"
+    line: "Banner /etc/ssh/banner"
+
+# Deshabilita el reenvío de sesiones gráficas X11 por SSH
+# Innecesario en este entorno y supone una superficie de ataque extra
+- name: Deshabilitar X11Forwarding
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^#?X11Forwarding"
+    line: "X11Forwarding no"
+
+# Deshabilita el reenvío del agente SSH
+# Evita que un atacante use las claves del agente para moverse lateralmente
+- name: Deshabilitar AllowAgentForwarding
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^#?AllowAgentForwarding"
+    line: "AllowAgentForwarding no"
+
+# Deshabilita el reenvío de puertos TCP por SSH (tunneling)
+# Evita que SSH sea usado como proxy para acceder a otros sistemas internos
+- name: Deshabilitar AllowTcpForwarding
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^#?AllowTcpForwarding"
+    line: "AllowTcpForwarding no"
+
+# Limita a 3 los intentos de autenticación por conexión
+# Dificulta ataques de fuerza bruta reduciendo los intentos permitidos
+- name: MaxAuthTries
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^#?MaxAuthTries"
+    line: "MaxAuthTries 3"
+
+# Limita a 2 las sesiones SSH simultáneas por conexión
+# Reduce la superficie de ataque en caso de sesión comprometida
+- name: MaxSessions
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^#?MaxSessions"
+    line: "MaxSessions 2"
+
+# Desactiva el keepalive TCP a nivel de sistema operativo
+# Usa en su lugar ClientAliveInterval que opera a nivel SSH
+# Más seguro porque detecta conexiones muertas de forma controlada
+- name: TCPKeepAlive
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^#?TCPKeepAlive"
+    line: "TCPKeepAlive no"
+
+# Aumenta el nivel de detalle de los logs de SSH
+# VERBOSE registra las huellas digitales de las claves usadas
+# Facilita la detección de accesos sospechosos y la auditoría
+- name: LogLevel VERBOSE
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^#?LogLevel"
+    line: "LogLevel VERBOSE"
+
+# Envía un ping al cliente cada 300 segundos para comprobar si sigue activo
+# Evita que sesiones abandonadas queden abiertas indefinidamente
+- name: ClientAliveInterval
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^#?ClientAliveInterval"
+    line: "ClientAliveInterval 300"
+
+# Si el cliente no responde, lo intenta 2 veces antes de cerrar la sesión
+# Resultado: sesión cerrada tras 10 minutos sin actividad (300s × 2 = 600s)
+- name: ClientAliveCountMax
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^#?ClientAliveCountMax"
+    line: "ClientAliveCountMax 2"
+
+# Reinicia SSH al final para aplicar TODOS los cambios de una vez
+# Debe ir siempre al final para no perder ninguna configuración
+- name: Reiniciar SSH
+  service:
+    name: ssh
+    state: restarted

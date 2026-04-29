@@ -1,0 +1,11 @@
+- name: Bastionado completo del sistema
+  hosts: servers
+  become: yes
+
+  roles:
+    - common
+    - ssh
+    - firewall
+    - fail2ban
+    - pam
+    - hardening

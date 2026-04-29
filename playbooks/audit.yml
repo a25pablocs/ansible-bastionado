@@ -4,6 +4,15 @@
 
   tasks:
 
+    # Crear directorio de auditorías donde se van a guardar los informes
+    - name: Crear directorio de auditorías
+      file:
+        path: /var/log/auditorias
+        state: directory
+        owner: root
+        group: root
+        mode: '0750'
+
     # INFORMACIÓN DEL SISTEMA
 
     - name: Obtener hostname
@@ -129,4 +138,4 @@
           DISCO:
           {{ disco.stdout }}
 
-        dest: /tmp/auditoria_{{ inventory_hostname }}_pro.txt
+        dest: /var/log/auditorias/auditoria_{{ inventory_hostname }}_{{ ansible_date_time.date }}.txt
